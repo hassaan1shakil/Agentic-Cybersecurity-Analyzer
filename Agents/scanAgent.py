@@ -1,8 +1,7 @@
 import os
 import json
-import subprocess
 from Scanners.web_scanner import zap_scan
-from Scanners.code_analyzer import analyze_code_with_semgrep, enhance_with_gpt
+from Scanners.code_analyzer import analyze_code_with_semgrep, enhance_with_gemini
 
 class ScanAgent:
     def __init__(self, url=None, code_path=None):
@@ -15,8 +14,7 @@ class ScanAgent:
             return None
         print("[+] Running ZAP Web Scan...")
         report = zap_scan(self.url)
-        os.makedirs("reports", exist_ok=True)
-        with open("reports/web_report.json", "w") as f:
+        with open("Reports/web_report.json", "w") as f:
             json.dump(report, f, indent=4)
         return report
 
@@ -26,9 +24,8 @@ class ScanAgent:
             return None
         print("[+] Running Semgrep Code Analysis...")
         raw_report = analyze_code_with_semgrep(self.code_path)
-        enhanced_report = enhance_with_gpt(raw_report)
-        os.makedirs("reports", exist_ok=True)
-        with open("reports/code_report.json", "w") as f:
+        enhanced_report = enhance_with_gemini(raw_report)
+        with open("Reports/code_report.json", "w") as f:
             json.dump(enhanced_report, f, indent=4)
         return enhanced_report
 

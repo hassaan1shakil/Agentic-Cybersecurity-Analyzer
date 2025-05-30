@@ -1,12 +1,15 @@
 import json
 import subprocess
-import openai
 import os
 from dotenv import load_dotenv
+import google.generativeai as genai
 
 load_dotenv()
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+genai.configure(api_key=GEMINI_API_KEY)
+
+model = genai.GenerativeModel("gemini-2.0-flash")
 
 def analyze_code_with_semgrep(code_path):
     try:
@@ -18,7 +21,7 @@ def analyze_code_with_semgrep(code_path):
         print("[!] Semgrep scan failed:", e)
         return {}
 
-def enhance_with_gpt(semgrep_report):
+def enhance_with_gemini(semgrep_report):
     for issue in semgrep_report.get("results", []):
         message = issue["extra"].get("message", "")
         code_snippet = issue.get("extra", {}).get("lines", "")
@@ -35,18 +38,13 @@ def enhance_with_gpt(semgrep_report):
         Message:
         {message}
         """
+
         try:
-            response = openai.ChatCompletion.create(
-                model="gpt-4o",
-                messages=[
-                    {"role": "system", "content": "You are a secure code expert."},
-                    {"role": "user", "content": prompt}
-                ]
-            )
-            explanation = response["choices"][0]["message"]["content"]
+            response = model.generate_content(prompt)
+            explanation = response.text
         except Exception as e:
-            explanation = "GPT explanation failed."
-            print("[!] GPT Error:", e)
+            explanation = "Gemini explanation failed."
+            print("[!] Gemini Error:", e)
 
         issue["explanation"] = explanation
     return semgrep_report
