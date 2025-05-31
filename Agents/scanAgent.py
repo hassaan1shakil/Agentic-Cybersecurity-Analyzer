@@ -1,6 +1,6 @@
 import os
 import json
-from Scanners.web_scanner import zap_scan
+from Scanners.web_scanner import zap_scan, format_web_scan_results
 from Scanners.code_analyzer import analyze_code_with_semgrep, enhance_with_gemini
 
 class ScanAgent:
@@ -14,6 +14,7 @@ class ScanAgent:
             return None
         print("[+] Running ZAP Web Scan...")
         report = zap_scan(self.url)
+        report = format_web_scan_results(report)
         with open("Reports/web_report.json", "w") as f:
             json.dump(report, f, indent=4)
         return report
@@ -24,7 +25,15 @@ class ScanAgent:
             return None
         print("[+] Running Semgrep Code Analysis...")
         raw_report = analyze_code_with_semgrep(self.code_path)
-        enhanced_report = enhance_with_gemini(raw_report)
+        enhanced_results = enhance_with_gemini(raw_report.get("results", []))
+        
+        enhanced_report = {
+            "results": enhanced_results,
+            "errors": raw_report.get("errors", []),
+            "paths": raw_report.get("paths", {}),
+            "version": raw_report.get("version", "")
+        }
+        
         with open("Reports/code_report.json", "w") as f:
             json.dump(enhanced_report, f, indent=4)
         return enhanced_report

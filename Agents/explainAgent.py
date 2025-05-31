@@ -46,13 +46,14 @@ class ExplainAgent:
         Vulnerability Details:
         {json.dumps(vulnerability, indent=2)}
         
-        Please provide a comprehensive but concise analysis in markdown format.
+        
+        Please provide the output in plain text. Do not use any markdown formatting.
         """
         
         try:
             response = self.model.generate_content(prompt)
             vulnerability["ai_explanation"] = response.text
-            print(f"[+] Enhanced web vulnerability: {vulnerability.get('alert', 'Unknown')}")
+            print(f"[+] Enhanced web vulnerability: {vulnerability.get('name', 'Unknown')}")
         except Exception as e:
             vulnerability["ai_explanation"] = f"AI explanation failed to generate. Error: {str(e)}"
             print(f"[!] Gemini Error for web vulnerability: {e}")
@@ -76,7 +77,7 @@ class ExplainAgent:
         Vulnerability Details:
         {json.dumps(vulnerability, indent=2)}
         
-        Please provide actionable security guidance in markdown format.
+        Please provide actionable security guidance in plain text only. Avoid using markdown formatting.
         """
         
         try:

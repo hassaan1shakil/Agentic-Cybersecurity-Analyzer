@@ -1,0 +1,74 @@
+{
+    "results": [
+        {
+            "check_id": "javascript.express.security.audit.express-check-csurf-middleware-usage.express-check-csurf-middleware-usage",
+            "path": "/home/pola-k/Downloads/ai-hackathon-creed-master/Vulnerable Files/auth_vuln.js",
+            "start": {
+                "line": 2,
+                "col": 7,
+                "offset": 42
+            },
+            "end": {
+                "line": 2,
+                "col": 22,
+                "offset": 57
+            },
+            "extra": {
+                "message": "A CSRF middleware was not detected in your express application. Ensure you are either using one such as `csurf` or `csrf` (see rule references) and/or you are properly doing CSRF validation in your routes with a token or cookies.",
+                "metadata": {
+                    "category": "security",
+                    "references": [
+                        "https://www.npmjs.com/package/csurf",
+                        "https://www.npmjs.com/package/csrf",
+                        "https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html"
+                    ],
+                    "cwe": [
+                        "CWE-352: Cross-Site Request Forgery (CSRF)"
+                    ],
+                    "owasp": [
+                        "A01:2021 - Broken Access Control"
+                    ],
+                    "technology": [
+                        "javascript",
+                        "typescript",
+                        "express"
+                    ],
+                    "cwe2022-top25": true,
+                    "cwe2021-top25": true,
+                    "subcategory": [
+                        "audit"
+                    ],
+                    "likelihood": "LOW",
+                    "impact": "HIGH",
+                    "confidence": "LOW",
+                    "license": "Semgrep Rules License v1.0. For more details, visit semgrep.dev/legal/rules-license",
+                    "vulnerability_class": [
+                        "Cross-Site Request Forgery (CSRF)"
+                    ],
+                    "source": "https://semgrep.dev/r/javascript.express.security.audit.express-check-csurf-middleware-usage.express-check-csurf-middleware-usage",
+                    "shortlink": "https://sg.run/BxzR"
+                },
+                "severity": "INFO",
+                "fingerprint": "requires login",
+                "lines": "requires login",
+                "validation_state": "NO_VALIDATOR",
+                "engine_kind": "OSS"
+            },
+            "vulnerable_line": 2,
+            "code_snippet": "requires login",
+            "exact_snippet": "app = express()",
+            "explanation": "The vulnerability is a missing CSRF (Cross-Site Request Forgery) protection in the Express.js application. This means that an attacker could potentially trick a user into unknowingly performing actions on the application that the user did not intend to do, such as changing their password or making a purchase, by crafting a malicious website or email.\n\nWithout CSRF protection, an attacker can forge HTTP requests that appear to originate from a legitimate user who is already authenticated. For example, if a user is logged into the application, and an attacker sends a specially crafted link in an email, clicking the link could trigger a request to the application's server that performs an unwanted action, using the user's established session.\n\nTo fix this, you need to implement CSRF protection. One common way to do this is to use a middleware like `csurf`. First, install the csurf package: `npm install csurf`. Then, in your Express application, include and use the csurf middleware. This typically involves generating a CSRF token, sending it to the client (usually in a cookie or a hidden form field), and then verifying that the token is included and valid in any state-changing requests (POST, PUT, DELETE, etc.).\n\nHere's a basic example of how to implement CSRF protection using csurf:\n\n1.  Include the middleware: `const csrf = require('csurf');`\n2.  Create a csrf middleware instance: `const csrfProtection = csrf({ cookie: true });`\n3.  Apply it to the appropriate routes (or globally): `app.use(csrfProtection);`\n4.  In your routes, generate a CSRF token: `app.get('/form', csrfProtection, (req, res) => { res.render('form', { csrfToken: req.csrfToken() }); });`\n5.  Include the token in your forms (or requests): `<input type=\"hidden\" name=\"_csrf\" value=\"{{csrfToken}}\">`\n6.  Ensure the middleware verifies the token on state-changing requests (POST, PUT, DELETE etc).\n\nBy implementing CSRF protection, you ensure that any state-changing requests are only accepted if they originate from your application's legitimate forms or APIs and contain the correct, server-generated CSRF token, thus preventing attackers from forging requests on behalf of authenticated users. You could also explore alternatives like the \"csrf\" package, depending on project needs."
+        }
+    ],
+    "errors": [],
+    "paths": {
+        "scanned": [
+            "/home/pola-k/Downloads/ai-hackathon-creed-master/Vulnerable Files/app.vuln.php",
+            "/home/pola-k/Downloads/ai-hackathon-creed-master/Vulnerable Files/auth_vuln.js",
+            "/home/pola-k/Downloads/ai-hackathon-creed-master/Vulnerable Files/authentication.js",
+            "/home/pola-k/Downloads/ai-hackathon-creed-master/Vulnerable Files/index.php",
+            "/home/pola-k/Downloads/ai-hackathon-creed-master/Vulnerable Files/secret.js"
+        ]
+    },
+    "version": "1.123.0"
+}

@@ -63,3 +63,51 @@ def zap_scan(url, auth=None, enable_ajax_spider=True, api_spec=True):
     alerts = zap.core.alerts()
     zap.core.shutdown()
     return alerts
+
+
+def format_web_scan_results(raw_data):
+    grouped = {}
+    risk_priority = {
+        "High": 1,
+        "Medium": 2,
+        "Low": 3,
+        "Informational": 4
+    }
+
+    for item in raw_data:
+        name = item["name"]
+
+        if name not in grouped:
+            grouped[name] = {
+                "name": name,
+                "risk": item.get("risk", ""),
+                "description": item.get("description", ""),
+                "solution": item.get("solution", ""),
+                "references": item.get("reference", "").split("\n") if "reference" in item else [],
+                "tags": item.get("tags", {}),
+                "common": {
+                    "pluginId": item.get("pluginId", ""),
+                    "cweid": item.get("cweid", ""),
+                    "wascid": item.get("wascid", ""),
+                    "confidence": item.get("confidence", ""),
+                    "sourceid": item.get("sourceid", ""),
+                    "alertRef": item.get("alertRef", ""),
+                },
+                "instances": []
+            }
+
+        instance = {
+            "url": item.get("url", ""),
+            "param": item.get("param", ""),
+            "method": item.get("method", ""),
+            "evidence": item.get("evidence", ""),
+            "messageId": item.get("messageId", ""),
+            "sourceMessageId": item.get("sourceMessageId", "")
+        }
+
+        grouped[name]["instances"].append(instance)
+    
+    grouped_list = list(grouped.values())
+    grouped_list.sort(key=lambda x: risk_priority.get(x["risk"], 5))
+
+    return grouped_list

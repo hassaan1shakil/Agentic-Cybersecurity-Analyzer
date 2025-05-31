@@ -11,40 +11,86 @@ genai.configure(api_key=GEMINI_API_KEY)
 
 model = genai.GenerativeModel("gemini-2.0-flash")
 
+SUPPORTED_EXTENSIONS = {
+    ".py", ".js", ".ts", ".java", ".go", ".c", ".cpp", ".rb", ".php"
+}
+
+def get_supported_files(code_path):
+    files = []
+    for root, _, filenames in os.walk(code_path):
+        for filename in filenames:
+            ext = os.path.splitext(filename)[1]
+            if ext in SUPPORTED_EXTENSIONS:
+                files.append(os.path.join(root, filename))
+    return files
+
 def analyze_code_with_semgrep(code_path):
+    files_to_scan = get_supported_files(code_path)
+    if not files_to_scan:
+        print("[!] No supported source code files found.")
+        return {}
+
     try:
         result = subprocess.run([
-            "semgrep", "--config", "p/default", code_path, "--json"
+            "semgrep", "--config", "p/default", "--json", *files_to_scan
         ], capture_output=True, text=True)
-        return json.loads(result.stdout)
+
+        semgrep_output = json.loads(result.stdout)
+
+        for issue in semgrep_output.get("results", []):
+            issue["vulnerable_line"] = issue.get("start", {}).get("line", None)
+            issue["code_snippet"] = issue.get("extra", {}).get("lines", "").strip()
+            file_path = issue.get("path", "")
+            start_offset = issue.get("start", {}).get("offset", None)
+            end_offset = issue.get("end", {}).get("offset", None)
+
+            if start_offset is not None and end_offset is not None and os.path.exists(file_path):
+                try:
+                    with open(file_path, "r", encoding="utf-8") as f:
+                        full_content = f.read()
+                        exact_snippet = full_content[start_offset:end_offset].strip()
+                        issue["exact_snippet"] = exact_snippet
+                except Exception as e:
+                    print(f"[!] Failed to extract exact snippet from {file_path}: {e}")
+                    issue["exact_snippet"] = issue["code_snippet"]
+            else:
+                issue["exact_snippet"] = issue["code_snippet"]
+
+        print(f"[+] Semgrep scan completed. {len(semgrep_output.get('results', []))} issues found.")
+        return semgrep_output
+
     except Exception as e:
         print("[!] Semgrep scan failed:", e)
         return {}
 
-def enhance_with_gemini(semgrep_report):
-    for issue in semgrep_report.get("results", []):
-        message = issue["extra"].get("message", "")
-        code_snippet = issue.get("extra", {}).get("lines", "")
-        file_path = issue.get("path", "")
 
-        prompt = f"""
-        You are an application security expert.
-        Analyze the following code snippet and explain the security vulnerability:
+def enhance_with_gemini(issues):
+    enhanced = []
+    for issue in issues:
+        file = issue.get("path", "Unknown")
+        line = issue.get("start", {}).get("line", "Unknown")
+        message = issue.get("extra", {}).get("message", "")
+        snippet = issue.get("extra", {}).get("lines", "")
 
-        File: {file_path}
-        Code:
-        {code_snippet}
-
-        Message:
-        {message}
-        """
+        prompt = (
+            "You are a cybersecurity analyst. Analyze and explain the vulnerability "
+            "in the following source code. Do not use markdown or bullet points. "
+            "Only respond in plain text.\n\n"
+            f"File: {file}\n"
+            f"Line: {line}\n"
+            f"Code Snippet:\n{snippet}\n\n"
+            f"Message: {message}\n\n"
+            "Explain the vulnerability and how to fix it."
+        )
 
         try:
             response = model.generate_content(prompt)
-            explanation = response.text
+            explanation = response.text.strip()
         except Exception as e:
-            explanation = "Gemini explanation failed."
-            print("[!] Gemini Error:", e)
+            explanation = "Model failed to analyze this vulnerability."
+            print("[!] Model error:", e)
 
         issue["explanation"] = explanation
-    return semgrep_report
+        enhanced.append(issue)
+
+    return enhanced
