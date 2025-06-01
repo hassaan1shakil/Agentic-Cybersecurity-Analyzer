@@ -15,7 +15,7 @@ class UrduReportTranslator:
         os.makedirs(self.output_dir, exist_ok=True)
 
     def translate_file(self, file_path):
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             english_text = f.read()
 
         # Gemini prompt
@@ -39,9 +39,8 @@ Text to translate:
                 input_path = os.path.join(self.input_dir, filename)
                 translated_text = self.translate_file(input_path)
 
-                output_path = os.path.join(
-                    self.output_dir, f"urdu_{filename}")
-                with open(output_path, "w", encoding='utf-8') as f:
+                output_path = os.path.join(self.output_dir, f"urdu_{filename}")
+                with open(output_path, "w", encoding="utf-8") as f:
                     f.write(translated_text)
                 print(f"✔ Urdu translation created: {output_path}")
 
@@ -49,9 +48,9 @@ Text to translate:
 class VulnerabilityReportAgent:
     def __init__(self, input_path, output_dir, model_name="gemini-2.0-flash"):
         load_dotenv()
-        self.api_key = os.getenv("GOOGLE_API_KEY")
+        self.api_key = os.getenv("GEMINI_API_KEY")
         if not self.api_key:
-            raise ValueError("GOOGLE_API_KEY not found in environment.")
+            raise ValueError("GEMINI_API_KEY not found in environment.")
 
         genai.configure(api_key=self.api_key)
         self.model = genai.GenerativeModel(model_name)
@@ -64,15 +63,15 @@ class VulnerabilityReportAgent:
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def simplify_instances(self):
-        with open(self.input_path, 'r', encoding='utf-8') as infile:
+        with open(self.input_path, "r", encoding="utf-8") as infile:
             data = json.load(infile)
 
         for vuln in data:
-            if 'instances' in vuln:
-                count = len(vuln['instances'])
-                vuln['instances'] = f"{count} instance(s) affected"
+            if "instances" in vuln:
+                count = len(vuln["instances"])
+                vuln["instances"] = f"{count} instance(s) affected"
 
-        with open(self.modified_json_path, 'w', encoding='utf-8') as outfile:
+        with open(self.modified_json_path, "w", encoding="utf-8") as outfile:
             json.dump(data, outfile, indent=4, ensure_ascii=False)
         return data
 
@@ -98,17 +97,20 @@ Here is the vulnerability data to summarize:
 {json.dumps(simplified_data, indent=2, ensure_ascii=False)}
 """
         response = self.model.generate_content(prompt)
-        with open(self.overview_path, "w", encoding='utf-8') as f:
+        with open(self.overview_path, "w", encoding="utf-8") as f:
             f.write(response.text.strip())
         print(f"✔ Overall report created: {self.overview_path}")
 
     def generate_detailed_reports(self):
-        with open(self.input_path, 'r', encoding='utf-8') as f:
+        with open(self.input_path, "r", encoding="utf-8") as f:
             vulnerabilities = json.load(f)
 
         for vuln in vulnerabilities:
-            name = vuln.get("name", "Unnamed_Vulnerability").replace(
-                "/", "-").replace("\\", "-")
+            name = (
+                vuln.get("name", "Unnamed_Vulnerability")
+                .replace("/", "-")
+                .replace("\\", "-")
+            )
             prompt = self._build_vulnerability_prompt(vuln)
 
             response = self.model.generate_content(
@@ -117,12 +119,13 @@ Here is the vulnerability data to summarize:
                     "temperature": 0.0,
                     "top_p": 1.0,
                     "top_k": 1,
-                    "max_output_tokens": 2048
-                }
+                    "max_output_tokens": 2048,
+                },
             )
 
-            clean_name = "".join(c for c in name if c.isalnum()
-                                 or c in (' ', '-', '_')).rstrip()
+            clean_name = "".join(
+                c for c in name if c.isalnum() or c in (" ", "-", "_")
+            ).rstrip()
             filename = self.output_dir / f"{clean_name}.txt"
             with open(filename, "w", encoding="utf-8") as outfile:
                 outfile.write(response.text.strip())
@@ -139,17 +142,27 @@ Here is the vulnerability data to summarize:
         common = vuln.get("common", {})
         instances = vuln.get("instances", [])
 
-        reference_text = "\n".join(
-            f"- {ref}" for ref in references) if references else "No references provided."
-        tags_text = "\n".join(f"{key}: {value}" for key, value in tags.items(
-        )) if tags else "No tags provided."
-        common_text = "\n".join(f"{key}: {value}" for key, value in common.items(
-        )) if common else "No common metadata."
+        reference_text = (
+            "\n".join(f"- {ref}" for ref in references)
+            if references
+            else "No references provided."
+        )
+        tags_text = (
+            "\n".join(f"{key}: {value}" for key, value in tags.items())
+            if tags
+            else "No tags provided."
+        )
+        common_text = (
+            "\n".join(f"{key}: {value}" for key, value in common.items())
+            if common
+            else "No common metadata."
+        )
 
         if isinstance(instances, list):
             if all(isinstance(i, dict) for i in instances):
-                instance_list = "\n".join(json.dumps(
-                    i, ensure_ascii=False) for i in instances)
+                instance_list = "\n".join(
+                    json.dumps(i, ensure_ascii=False) for i in instances
+                )
             else:
                 instance_list = "\n".join(str(i) for i in instances)
         else:
@@ -196,7 +209,7 @@ if __name__ == "__main__":
     agent = VulnerabilityReportAgent(
         input_path="../report/scan_result.json",
         output_dir="output",
-        model_name="gemini-2.0-flash"
+        model_name="gemini-2.0-flash",
     )
 
     simplified_data = agent.simplify_instances()
@@ -205,6 +218,6 @@ if __name__ == "__main__":
     translator = UrduReportTranslator(
         genai.GenerativeModel("gemini-2.0-flash"),
         input_dir="output",
-        output_dir=os.path.join("output", "urdu_reports")
+        output_dir=os.path.join("output", "urdu_reports"),
     )
     translator.translate_all_reports()
