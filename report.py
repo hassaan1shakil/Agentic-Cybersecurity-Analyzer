@@ -182,6 +182,7 @@ Explain this in well-structured paragraphs using all the data provided. You must
 - Include and explain every tag and field provided.
 - Elaborate on how each reference is useful.
 - List all the exact instance paths/URLs where this issue occurred.
+- Make sure to highlight the impact using the data provided by "top_compliance_violations" and the filenames from "compliance_sources".
 - Use plain language and avoid repeating the vulnerability name excessively.
 
 Vulnerability Name: {name}
