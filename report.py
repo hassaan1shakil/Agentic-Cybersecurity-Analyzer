@@ -89,6 +89,7 @@ Guidelines:
 - If a solution exists, include it clearly.
 - Summarize relevant tags, like CWE or OWASP IDs, as part of the explanation.
 - Mention how many instances were affected using the instance count.
+- Make sure to highlight the impact using the data provided by "top_compliance_violations" and the filenames from "compliance_sources".
 - Adapt to missing fields gracefully — some sources may lack certain tags or structure.
 - Do not output markdown, code blocks, quotes, symbols, or lists — output should be plain readable text only.
 
@@ -207,7 +208,7 @@ Write the analysis now.
 
 if __name__ == "__main__":
     agent = VulnerabilityReportAgent(
-        input_path="../report/scan_result.json",
+        input_path="input/scan_result.json",
         output_dir="output",
         model_name="gemini-2.0-flash",
     )
