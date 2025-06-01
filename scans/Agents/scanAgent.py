@@ -4,9 +4,11 @@ from Scanners.web_scanner import zap_scan, format_web_scan_results
 from Scanners.code_analyzer import analyze_code_with_semgrep, enhance_with_gemini
 
 class ScanAgent:
-    def __init__(self, url=None, code_path=None):
+    def __init__(self, url=None, code_path=None, web_file = "Reports/web_report.json", code_file = "Reports/code_report.json"):
         self.url = url
         self.code_path = code_path
+        self.web_file = web_file
+        self.code_file = code_file
 
     def run_web_scan(self):
         if not self.url:
@@ -15,7 +17,7 @@ class ScanAgent:
         print("[+] Running ZAP Web Scan...")
         report = zap_scan(self.url)
         report = format_web_scan_results(report)
-        with open("Reports/web_report.json", "w") as f:
+        with open(self.output_file, "w") as f:
             json.dump(report, f, indent=4)
         return report
 
@@ -34,7 +36,7 @@ class ScanAgent:
             "version": raw_report.get("version", "")
         }
         
-        with open("Reports/code_report.json", "w") as f:
+        with open(self.code_file, "w") as f:
             json.dump(enhanced_report, f, indent=4)
         return enhanced_report
 

@@ -6,11 +6,11 @@ import google.generativeai as genai
 load_dotenv()
 
 class ExplainAgent:
-    def __init__(self, web_report_path="Reports/web_report.json", code_report_path="Reports/code_report.json"):
+    def __init__(self, web_report_path="Reports/web_report.json", code_report_path="Reports/code_report.json", outfile="Reports/combined_report.json"):
         self.web_report_path = web_report_path
         self.code_report_path = code_report_path
         self.gemini_api_key = os.getenv("GEMINI_API_KEY")
-
+        self.output_file = outfile
         if self.gemini_api_key:
             genai.configure(api_key=self.gemini_api_key)
             self.model = genai.GenerativeModel("gemini-2.0-flash")
@@ -137,7 +137,7 @@ class ExplainAgent:
             }
         }
 
-        with open("Reports/combined_report.json", "w") as f:
+        with open(self.output_file, "w") as f:
             json.dump(combined, f, indent=4)
 
         print(f"[+] Enhanced report saved with {len(formatted_web)} web and {len(formatted_code)} code vulnerabilities")
