@@ -25,7 +25,7 @@ export default function LoginPage() {
 
     try {
       const endpoint = isLogin ? "/login" : "/signup"
-      const response = await fetch(`http://192.168.46.212:8080/api/v1/auth${endpoint}`, {
+      const response = await fetch(`http://localhost:8000/api/v1/auth${endpoint}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
