@@ -57,8 +57,15 @@ def analyze_code_with_semgrep(code_path):
 
 
 def code_scanner(git_repo_url: str):
-    if not git_repo_url or not git_repo_url.endswith(".git"):
-        print("[!] Invalid Git repo URL.")
+    
+    git_repo_url = git_repo_url.strip()
+    
+    if not git_repo_url:
+        print("[!] No Git repo URL provided.")
+        return { "error": "No Git repo URL provided." }
+    
+    elif not git_repo_url.endswith(".git"):
+        print(f"[!] Invalid Git repo URL: {git_repo_url}")
         return { "error": "Invalid Git repository URL." }
 
     print("[+] Cloning GitHub repository...")

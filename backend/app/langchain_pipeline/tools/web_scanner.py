@@ -58,32 +58,28 @@ def start_zap_daemon(zap_path="/usr/local/bin", base_port=8081, api_key=None):
 
     except Exception as e:
         print(f"[!] Failed to start ZAP daemon: {e}")
-        raise RuntimeError("ZAP failed to start.")
+        return { "error": f"Failed to start ZAP daemon: {e}" }
 
 
 def zap_scan(url, auth=None, enable_ajax_spider=True, api_spec=True):
     
     try:
         zap_instance = start_zap_daemon(ZAP_PATH, 8081)
-        print("FUCK ME")
-        print(zap_instance)
         zap_proxy = f"{ZAP_HOST}:{zap_instance['port']}"
         print("Zap Proxy:", zap_proxy)
         
         zap = ZAPv2(apikey=zap_instance['api_key'], proxies={'http': zap_proxy, 'https': zap_proxy})
-        print("Zap Instance: ", zap)
         
-        print("url opening")
+        print("Opening URL")
         zap.core.access_url(url)
-        # zap.urlopen(url)
-        print("url opened")
+        print("URL Opened")
         
         if api_spec:
             print("[+] Importing API spec")
             zap.openapi.import_url("https://api.example.com/swagger.json")  
-            print("api spec checked")
+            print("API Spec Imported")
 
-        print("starting zap.spider")
+        print("Starting ZAP Spider")
         scan_id = zap.spider.scan(url)
         while int(zap.spider.status(scan_id)) < 100:
             print(f"[ZAP Spider] Progress: {zap.spider.status(scan_id)}%")
@@ -120,6 +116,7 @@ def zap_scan(url, auth=None, enable_ajax_spider=True, api_spec=True):
         
     except Exception as e:
         print(e)
+        return { "error": f"Web Scan Could not be completed. {e}" }
         
     finally:
         if 'zap_instance' in locals() and 'container_id' in zap_instance:
@@ -185,6 +182,7 @@ def web_scanner(web_url: str):
     print("[+] Running ZAP Web Scan...")
     report = zap_scan(web_url)
     report = format_web_scan_results(report)
+    return report
     
 
 # if __name__ == "__main__":
