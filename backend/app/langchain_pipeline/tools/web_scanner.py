@@ -1,4 +1,5 @@
 import os
+import json
 import time
 import random
 import socket
@@ -58,7 +59,10 @@ def start_zap_daemon(zap_path="/usr/local/bin", base_port=8081, api_key=None):
 
     except Exception as e:
         print(f"[!] Failed to start ZAP daemon: {e}")
-        return { "error": f"Failed to start ZAP daemon: {e}" }
+        return {
+            "status": "failure",
+            "error": f"Failed to start ZAP daemon: {e}"
+        }
 
 
 def zap_scan(url, auth=None, enable_ajax_spider=True, api_spec=True):
@@ -112,12 +116,19 @@ def zap_scan(url, auth=None, enable_ajax_spider=True, api_spec=True):
         print("Shutting Down ZAP...")
         print("[+] ZAP scan completed.")
         print(f"[+] Found {len(alerts)} alerts.")
-        return alerts
+        
+        return {
+            "status": "success",
+            "results": alerts
+        }
         
     except Exception as e:
         print(e)
-        return { "error": f"Web Scan Could not be completed. {e}" }
-        
+        return {
+            "status": "failure",
+            "error": f"Web Scan Could not be completed. {e}"
+        }
+
     finally:
         if 'zap_instance' in locals() and 'container_id' in zap_instance:
             subprocess.run(["docker", "stop", zap_instance['container_id']], check=True)
@@ -126,7 +137,10 @@ def zap_scan(url, auth=None, enable_ajax_spider=True, api_spec=True):
 
 def format_web_scan_results(raw_data):
     if not raw_data:
-        return { "results": [] }
+        return {
+            "status": "success",
+            "results": []
+        }
     
     grouped = {}
     risk_priority = {
@@ -172,21 +186,52 @@ def format_web_scan_results(raw_data):
     grouped_list = list(grouped.values())
     grouped_list.sort(key=lambda x: risk_priority.get(x["risk"], 5))
 
-    return { "results": grouped_list }
+    return {
+        "status": "success",
+        "results": grouped_list
+    }
 
 def web_scanner(web_url: str):
     if not web_url:
         print("[!] No URL provided. Skipping web scan.")
-        return { "error": "No URL provided" }
+        return {
+            "status": "failure",
+            "error": "No URL provided"
+        }
     
     print("[+] Running ZAP Web Scan...")
     report = zap_scan(web_url)
-    report = format_web_scan_results(report)
+    
+    if "status" in report and report["status"] == "failure":
+        return report
+        
+    report = format_web_scan_results(report.get('results'))
     return report
     
 
-# if __name__ == "__main__":
-#     web_url = "https://hassaanshakil.com"
-#     scan_output = web_scanner(web_url)
-#     print("Scan Output:\n")
-#     print(scan_output)
+def web_scanner_handler(git_repo_url: str):
+    
+    results = web_scanner(git_repo_url)
+    
+    if results.get("status") == "failure":
+        return {
+            "status": "failure",
+            "message": results.get("error", "An error occurred during the code scan.")
+        }
+    
+    reports_dir = "scan_reports"
+    os.makedirs(reports_dir, exist_ok=True)
+    filename = os.path.join(reports_dir, f"web_scan_results_{int(time.time())}.json")
+    with open(filename, "w") as f:
+        json.dump(results, f, indent=4)
+        
+    return {
+        "status": results.get("status"),
+        "message": f"Code scan completed. Results saved to {filename}"
+    }
+
+if __name__ == "__main__":
+    web_url = "https://hassaanshakil.com"
+    scan_output = web_scanner_handler(web_url)
+    print("Web Scan Output:\n")
+    print(scan_output)
