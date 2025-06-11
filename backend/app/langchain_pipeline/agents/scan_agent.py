@@ -60,7 +60,7 @@ def run_scan_agent(scan_sources: list, scan_types: list):
         f"In case of failure, make at least 3 retries. Check for failure using the status message recieved from the tool's output."
         
         f"Collect the JSON output from all generated tool calls. Return a single JSON dictionary structured as follows:\n"
-        "{'code_scan_file': name of the file where code scan results are saved, 'web_scan': name of the file where web scan results are saved}\n\n"
+        "{'code_scan_file': name of the file where code scan results are saved, 'web_scan_file': name of the file where web scan results are saved}\n\n"
         "If no calls were made for a specific scan type (either not requested or no matching sources), the corresponding key's value should be empty (``). Include the filename received from the tools exactly as received and make sure it is complete and not modified.\n\n"
        
         "Example output: {'code_scan_file': 'code_scan_results_487384684.py', 'web_scan_file': 'web_scan_results_487384684'}\n"

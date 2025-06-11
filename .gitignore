@@ -2,3 +2,4 @@ venv
 .env
 backend/data
 backend/app/scan_reports
+backend/app/explain_reports
